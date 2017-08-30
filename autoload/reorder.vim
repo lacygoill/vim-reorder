@@ -21,7 +21,7 @@ fu! s:delete_variables() abort "{{{1
     unlet! s:type
 endfu
 
-fu! reorder#main(type) abort "{{{1
+fu! reorder#op(type) abort "{{{1
     let s:type = a:type
     call s:reg_save()
 
