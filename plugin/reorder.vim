@@ -16,15 +16,18 @@ xno <silent> gs     :<c-u>call reorder#set_how('sort')<bar>call reorder#main(vis
 nno <silent> gS     :<c-u>call reorder#set_how('shuf')<bar>set opfunc=reorder#main<cr>g@
 nno <silent> gSS    :<c-u>call reorder#set_how('shuf')<bar>set opfunc=reorder#main<bar>exe 'norm! '.v:count1.'g@_'<cr>
 xno <silent> gS     :<c-u>call reorder#set_how('shuf')<bar>call reorder#main(visualmode())<cr>
+
 " Usage: {{{1
+
+"     gs          operator to sort
+"     gr          operator to reverse the order
+"     gS          "           randomize the order
 "
 "     gsip        sort paragraph
 "     5gss        sort 5 lines
 "     gsib        sort text between parentheses
-"
-"     gr          operator to reverse the order
-"     gS          "           randomize the order
-"
+
+
 " When we call the operators with a characterwise motion / text-object,
 " they try to guess what's the separator between the texts to sort.
 " Indeed, in this case, the separator is probably not a newline, but a comma,
@@ -39,4 +42,3 @@ xno <silent> gS     :<c-u>call reorder#set_how('shuf')<bar>call reorder#main(vis
 "     b    3gss ou gsip
 "     c
 "     a
-
