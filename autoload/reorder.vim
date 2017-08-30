@@ -61,9 +61,10 @@ fu! s:reorder_lines() abort "{{{1
         exe range.'sort'
 
     elseif s:how ==# 'reverse'
-        norm! zi
+        let fen_save = &l:fen
+        let &l:fen   = 0
         exe 'keepj keepp '.range.'g/^/m '.first_line
-        norm! zi
+        let &l:fen = fen_save
 
     elseif s:how ==# 'shuf'
         exe 'keepj keepp '.range.'!shuf'
