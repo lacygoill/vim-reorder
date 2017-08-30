@@ -15,6 +15,12 @@ fu! s:copy_text_obj() abort "{{{1
     endif
 endfu
 
+fu! s:delete_variables() abort "{{{1
+    unlet! s:how
+    unlet! s:reg_save
+    unlet! s:type
+endfu
+
 fu! reorder#main(type) abort "{{{1
     let s:type = a:type
     call s:reg_save()
@@ -28,6 +34,7 @@ fu! reorder#main(type) abort "{{{1
     endif
 
     call s:reg_restore()
+    call s:delete_variables()
 endfu
 
 fu! s:paste_new_text(contents) abort "{{{1
