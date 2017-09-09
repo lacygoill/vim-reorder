@@ -16,7 +16,7 @@ fu! s:copy_text_obj() abort "{{{1
 endfu
 
 fu! s:delete_variables() abort "{{{1
-    unlet! s:how
+    " don't delete `s:how`, it would break the dot command
     unlet! s:reg_save
     unlet! s:type
 endfu
