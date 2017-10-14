@@ -3,54 +3,49 @@ if exists('g:auto_loaded_reorder')
 endif
 let g:auto_loaded_reorder = 1
 
-fu! s:copy_text_obj() abort "{{{1
-    if s:type ==# 'char'
-        norm! `[v`]y
-    elseif s:type ==# 'v'
-        norm! `<v`>y
-    elseif s:type ==# "\<c-v>"
-        norm! gvy
-    elseif s:type ==# 'block'
-        exe "norm! `[\<c-v>`]y"
-    endif
-endfu
-
-fu! s:delete_variables() abort "{{{1
-    " don't delete `s:how`, it would break the dot command
-    unlet! s:reg_save
-    unlet! s:type
-endfu
-
 fu! reorder#op(type) abort "{{{1
     let s:type = a:type
-    call s:reg_save()
 
     if a:type ==# 'line' || a:type ==# 'V'
         call s:reorder_lines()
     else
-        call s:copy_text_obj()
-        let reordered_text = s:reorder_non_linewise_text()
-        call s:paste_new_text(reordered_text)
+        let cb_save  = &cb
+        let sel_save = &selection
+        let reg_save = [ getreg('"'), getregtype('"') ]
+        try
+            set cb-=unnamed cb-=unnamedplus
+            set selection=inclusive
+
+            if s:type ==# 'char'
+                norm! `[v`]y
+            elseif s:type ==# 'v'
+                norm! `<v`>y
+            elseif s:type ==# "\<c-v>"
+                norm! gvy
+            elseif s:type ==# 'block'
+                exe "norm! `[\<c-v>`]y"
+            endif
+
+            call s:paste_new_text(s:reorder_non_linewise_text())
+        catch
+            return 'echoerr '.string(v:exception)
+        finally
+            let &cb  = cb_save
+            let &sel = sel_save
+            call setreg('"', reg_save[0], reg_save[1])
+        endtry
     endif
 
-    call s:reg_restore()
-    call s:delete_variables()
+    " don't delete `s:how`, it would break the dot command
+    unlet! s:type
+
+    return ''
 endfu
 
 fu! s:paste_new_text(contents) abort "{{{1
     let reg_type = (s:type ==# 'block' || s:type ==# "\<c-v>") ? 'b' : ''
     call setreg('"', a:contents, reg_type)
     norm! gv""p
-endfu
-
-fu! s:reg_restore() abort "{{{1
-    call setreg('"', s:reg_save.unnamed[0], s:reg_save.unnamed[1])
-    call setreg('+', s:reg_save.plus[0],    s:reg_save.plus[1])
-endfu
-
-fu! s:reg_save() abort "{{{1
-    let s:reg_save = { 'unnamed': [getreg('"'), getregtype('"')],
-                   \   'plus':    [getreg('+'), getregtype('+')] }
 endfu
 
 fu! s:reorder_lines() abort "{{{1
