@@ -77,8 +77,8 @@ fu! s:reorder_non_linewise_text() abort "{{{1
         " Try to guess what is the separator between the texts we want to
         " sort. Could be a comma, colon, semicolon, or spaces.
         let regex_sep = !empty(matchstr(@", '[,;:]'))
-        \?                matchstr(@", '[,;:]').'\s*'
-        \:                '\s\+'
+        \?                  matchstr(@", '[,;:]').'\s*'
+        \:                  '\s\+'
 
         let texts_to_reorder = split(@", regex_sep)
 
