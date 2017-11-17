@@ -76,7 +76,7 @@ fu! s:reorder_non_linewise_text() abort "{{{1
     elseif s:type ==# 'char' || s:type ==# 'v'
         " Try to guess what is the separator between the texts we want to
         " sort. Could be a comma, colon, semicolon, or spaces.
-        let regex_sep = !empty(matchstr(@", '[,;:]'))
+        let regex_sep = @" =~# '[,;:]'
         \?                  matchstr(@", '[,;:]').'\s*'
         \:                  '\s\+'
 
