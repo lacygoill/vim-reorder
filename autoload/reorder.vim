@@ -1,7 +1,7 @@
-if exists('g:auto_loaded_reorder')
+if exists('g:autoloaded_reorder')
     finish
 endif
-let g:auto_loaded_reorder = 1
+let g:autoloaded_reorder = 1
 
 fu! reorder#op(type) abort "{{{1
     let s:type = a:type
