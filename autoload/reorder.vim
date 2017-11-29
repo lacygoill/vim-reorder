@@ -75,12 +75,13 @@ fu! s:reorder_non_linewise_text() abort "{{{1
 
     elseif s:type ==# 'char' || s:type ==# 'v'
         " Try to guess what is the separator between the texts we want to
-        " sort. Could be a comma, colon, semicolon, or spaces.
-        let regex_sep = @" =~# '[,;:]'
-        \?                  matchstr(@", '[,;:]').'\s*'
+        " sort. Could be a comma, a semicolon, or spaces.
+        let regex_sep = @" =~# '[,;]'
+        \?                  matchstr(@", '[,;]').'\s*'
         \:                  '\s\+'
 
         let texts_to_reorder = split(@", regex_sep)
+        call map(texts_to_reorder, { k,v -> matchstr(v, '\s*\zs.*\ze\s*')})
 
         " `join()` doesn't interpret its 2nd argument the same way `split()` does:
         "
@@ -89,8 +90,9 @@ fu! s:reorder_non_linewise_text() abort "{{{1
         let sep = substitute(regex_sep, '^\\s\\+$\|\\s\*$', ' ', '')
     endif
 
+    let space_padding = (s:type ==# 'char' || s:type ==# 'v') ? ' ' : ''
     return s:how ==# 'sort'
-    \?         join(sort(texts_to_reorder), sep)
+    \?         space_padding.join(sort(texts_to_reorder), sep).space_padding
     \:     s:how ==# 'reverse'
     \?         join(reverse(texts_to_reorder), sep)
     \:         join(systemlist('shuf', texts_to_reorder), sep)
