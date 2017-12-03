@@ -81,7 +81,7 @@ fu! s:reorder_non_linewise_text() abort "{{{1
         \:                  '\s\+'
 
         let texts_to_reorder = split(@", regex_sep)
-        call map(texts_to_reorder, { k,v -> matchstr(v, '\s*\zs.*\ze\s*')})
+        call map(texts_to_reorder, { i,v -> matchstr(v, '\s*\zs.*\ze\s*')})
 
         " `join()` doesn't interpret its 2nd argument the same way `split()` does:
         "
