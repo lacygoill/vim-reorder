@@ -28,7 +28,7 @@ fu! reorder#op(type) abort "{{{1
 
             call s:paste_new_text(s:reorder_non_linewise_text())
         catch
-            return 'echoerr '.string(v:exception)
+            call my_lib#catch_error()
         finally
             let &cb  = cb_save
             let &sel = sel_save
@@ -38,8 +38,6 @@ fu! reorder#op(type) abort "{{{1
 
     " don't delete `s:how`, it would break the dot command
     unlet! s:type
-
-    return ''
 endfu
 
 fu! s:paste_new_text(contents) abort "{{{1
