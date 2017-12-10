@@ -1,8 +1,3 @@
-if exists('g:autoloaded_reorder')
-    finish
-endif
-let g:autoloaded_reorder = 1
-
 fu! reorder#op(type) abort "{{{1
     let s:type = a:type
 
