@@ -83,9 +83,8 @@ fu! s:reorder_non_linewise_text() abort "{{{1
         let sep = substitute(regex_sep, '^\\s\\+$\|\\s\*$', ' ', '')
     endif
 
-    let space_padding = (s:type ==# 'char' || s:type ==# 'v') ? ' ' : ''
     return s:how ==# 'sort'
-    \?         space_padding.join(sort(texts_to_reorder), sep).space_padding
+    \?         join(sort(texts_to_reorder), sep)
     \:     s:how ==# 'reverse'
     \?         join(reverse(texts_to_reorder), sep)
     \:         join(systemlist('shuf', texts_to_reorder), sep)

@@ -42,6 +42,6 @@ xno  <silent><unique>  gS   :<c-u>call reorder#set_how('shuf')<bar>call reorder#
 "     (b; c; a)    gsib
 "     (b  c  a)    gsib
 
-"     b    3gss ou gsip
+"     b    3gss or gsip
 "     c
 "     a
