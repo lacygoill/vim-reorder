@@ -23,7 +23,7 @@ fu! reorder#op(type) abort "{{{1
 
             call s:paste_new_text(s:reorder_non_linewise_text())
         catch
-            return my_lib#catch_error()
+            return lg#catch_error()
         finally
             let &cb  = cb_save
             let &sel = sel_save
