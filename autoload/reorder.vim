@@ -1,7 +1,7 @@
 fu! reorder#op(type) abort "{{{1
     let s:type = a:type
 
-    if a:type ==# 'line' || a:type ==# 'V'
+    if a:type is# 'line' || a:type is# 'V'
         call s:reorder_lines()
     else
         let cb_save  = &cb
@@ -11,13 +11,13 @@ fu! reorder#op(type) abort "{{{1
             set cb-=unnamed cb-=unnamedplus
             set selection=inclusive
 
-            if s:type ==# 'char'
+            if s:type is# 'char'
                 norm! `[v`]y
-            elseif s:type ==# 'v'
+            elseif s:type is# 'v'
                 norm! `<v`>y
-            elseif s:type ==# "\<c-v>"
+            elseif s:type is# "\<c-v>"
                 norm! gvy
-            elseif s:type ==# 'block'
+            elseif s:type is# 'block'
                 exe "norm! `[\<c-v>`]y"
             endif
 
@@ -36,37 +36,37 @@ fu! reorder#op(type) abort "{{{1
 endfu
 
 fu! s:paste_new_text(contents) abort "{{{1
-    let reg_type = (s:type ==# 'block' || s:type ==# "\<c-v>") ? 'b' : ''
+    let reg_type = (s:type is# 'block' || s:type is# "\<c-v>") ? 'b' : ''
     call setreg('"', a:contents, reg_type)
     norm! gv""p
 endfu
 
 fu! s:reorder_lines() abort "{{{1
-    let range      = s:type ==# 'line' ? "'[,']" : "'<,'>"
-    let first_line = s:type ==# 'line' ? line("'[") - 1 : line("'<") - 1
+    let range      = s:type is# 'line' ? "'[,']" : "'<,'>"
+    let first_line = s:type is# 'line' ? line("'[") - 1 : line("'<") - 1
 
-    if s:how ==# 'sort'
+    if s:how is# 'sort'
         exe range.'sort'
 
-    elseif s:how ==# 'reverse'
+    elseif s:how is# 'reverse'
         let fen_save = &l:fen
         let &l:fen   = 0
         exe 'keepj keepp '.range.'g/^/m '.first_line
         let &l:fen = fen_save
 
-    elseif s:how ==# 'shuf'
+    elseif s:how is# 'shuf'
         exe 'keepj keepp '.range.'!shuf'
     endif
 endfu
 
 fu! s:reorder_non_linewise_text() abort "{{{1
-    if s:type ==# 'block' || s:type ==# "\<c-v>"
+    if s:type is# 'block' || s:type is# "\<c-v>"
         let texts_to_reorder = split(@")
         let sep = "\n"
         "   │
         "   └─ separator which will be added between 2 consecutive texts
 
-    elseif s:type ==# 'char' || s:type ==# 'v'
+    elseif s:type is# 'char' || s:type is# 'v'
         " Try to guess what is the separator between the texts we want to
         " sort. Could be a comma, a semicolon, or spaces.
         let regex_sep = @" =~# '[,;]'
@@ -83,9 +83,9 @@ fu! s:reorder_non_linewise_text() abort "{{{1
         let sep = substitute(regex_sep, '^\\s\\+$\|\\s\*$', ' ', '')
     endif
 
-    return s:how ==# 'sort'
+    return s:how is# 'sort'
     \?         join(sort(texts_to_reorder), sep)
-    \:     s:how ==# 'reverse'
+    \:     s:how is# 'reverse'
     \?         join(reverse(texts_to_reorder), sep)
     \:         join(systemlist('shuf', texts_to_reorder), sep)
 endfu
