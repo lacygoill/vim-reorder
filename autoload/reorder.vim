@@ -70,8 +70,8 @@ fu! s:reorder_non_linewise_text() abort "{{{1
         " Try to guess what is the separator between the texts we want to
         " sort. Could be a comma, a semicolon, or spaces.
         let regex_sep = @" =~# '[,;]'
-        \?                  matchstr(@", '[,;]').'\s*'
-        \:                  '\s\+'
+                    \ ?     matchstr(@", '[,;]').'\s*'
+                    \ :     '\s\+'
 
         let texts_to_reorder = split(@", regex_sep)
         call map(texts_to_reorder, { i,v -> matchstr(v, '\s*\zs.*\ze\s*')})
@@ -84,10 +84,10 @@ fu! s:reorder_non_linewise_text() abort "{{{1
     endif
 
     return s:how is# 'sort'
-    \?         join(sort(texts_to_reorder), sep)
-    \:     s:how is# 'reverse'
-    \?         join(reverse(texts_to_reorder), sep)
-    \:         join(systemlist('shuf', texts_to_reorder), sep)
+       \ ?     join(sort(texts_to_reorder), sep)
+       \ : s:how is# 'reverse'
+       \ ?     join(reverse(texts_to_reorder), sep)
+       \ :     join(systemlist('shuf', texts_to_reorder), sep)
 endfu
 
 fu! reorder#set_how(order_type) abort "{{{1
