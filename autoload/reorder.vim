@@ -108,7 +108,7 @@ fu! s:reorder_non_linewise_text() abort "{{{2
     endif
 
     let func = s:contains_only_digits(texts_to_reorder) ? 'N' : ''
-    return s:how is# 'sort'
+    sil return s:how is# 'sort'
        \ ?     join(sort(texts_to_reorder, func), sep_join)
        \ : s:how is# 'reverse'
        \ ?     join(reverse(texts_to_reorder), sep_join)
