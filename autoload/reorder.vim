@@ -86,7 +86,7 @@ fu! s:reorder_non_linewise_text() abort "{{{2
 
         let texts_to_reorder = split(@", sep_split)
         " remove surrounding whitespace
-        call map(texts_to_reorder, {i,v -> matchstr(v, '^\s*\zs.\{-}\ze\s*$')})
+        call map(texts_to_reorder, {_,v -> matchstr(v, '^\s*\zs.\{-}\ze\s*$')})
 
         " `join()` doesn't interpret its 2nd argument the same way `split()` does:{{{
         "
@@ -123,8 +123,8 @@ fu! s:contains_only_digits(...) abort "{{{2
     " Vim passes a variable to a function by reference not by copy,
     " and we don't want `map()` and `filter()` to alter the text.
     let texts = deepcopy(a:1)
-    call map(texts, {i,v -> matchstr(v, '\D')})
-    call filter(texts, {i,v -> v != ''})
+    call map(texts, {_,v -> matchstr(v, '\D')})
+    call filter(texts, {_,v -> v != ''})
     return empty(texts)
 endfu
 
