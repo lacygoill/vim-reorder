@@ -54,10 +54,16 @@ fu! s:reorder_lines() abort "{{{2
         exe range.'sort'.flag
 
     elseif s:how is# 'reverse'
-        let fen_save = &l:fen
-        let &l:fen   = 0
-        exe 'keepj keepp '.range.'g/^/m '.(firstline - 1)
-        let &l:fen = fen_save
+        let [fen_save, winid, bufnr] = [&l:fen, win_getid(), bufnr('%')]
+        try
+            let &l:fen = 0
+            exe 'keepj keepp '.range.'g/^/m '.(firstline - 1)
+        finally
+            if winbufnr(winid) == bufnr
+                let [tabnr, winnr] = win_id2tabwin(winid)
+                call settabwinvar(tabnr, winnr, '&fen', fen_save)
+            endif
+        endtry
 
     elseif s:how is# 'shuf'
         exe 'keepj keepp '.range.'!shuf'
