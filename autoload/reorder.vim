@@ -1,5 +1,5 @@
 " Interface {{{1
-fu! reorder#op(type) abort "{{{2
+fu reorder#op(type) abort "{{{2
     let s:type = a:type
 
     if a:type is# 'line' || a:type is# 'V'
@@ -37,13 +37,13 @@ fu! reorder#op(type) abort "{{{2
 endfu
 
 " Core {{{1
-fu! s:paste_new_text(contents) abort "{{{2
+fu s:paste_new_text(contents) abort "{{{2
     let reg_type = (s:type is# 'block' || s:type is# "\<c-v>") ? 'b' : ''
     call setreg('"', a:contents, reg_type)
     norm! gv""p
 endfu
 
-fu! s:reorder_lines() abort "{{{2
+fu s:reorder_lines() abort "{{{2
     let range = s:type is# 'line' ? "'[,']" : "'<,'>"
     let firstline = s:type is# 'line' ? line("'[") : line("'<")
     let lastline = s:type is# 'line' ? line("']") : line("'>")
@@ -70,7 +70,7 @@ fu! s:reorder_lines() abort "{{{2
     endif
 endfu
 
-fu! s:reorder_non_linewise_text() abort "{{{2
+fu s:reorder_non_linewise_text() abort "{{{2
     if s:type is# 'block' || s:type is# "\<c-v>"
         let texts_to_reorder = split(@")
         let sep_join = "\n"
@@ -122,7 +122,7 @@ fu! s:reorder_non_linewise_text() abort "{{{2
 endfu
 
 " Utility {{{1
-fu! s:contains_only_digits(...) abort "{{{2
+fu s:contains_only_digits(...) abort "{{{2
     " if  the text  contains  only  digits, we  want  a  numerical sorting  (not
     " lexicographic)
 
@@ -134,6 +134,6 @@ fu! s:contains_only_digits(...) abort "{{{2
     return empty(texts)
 endfu
 
-fu! reorder#set_how(order_type) abort "{{{2
+fu reorder#set_how(order_type) abort "{{{2
     let s:how = a:order_type
 endfu
