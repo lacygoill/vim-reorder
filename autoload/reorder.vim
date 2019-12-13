@@ -51,13 +51,13 @@ fu s:reorder_lines() abort "{{{2
     if s:how is# 'sort'
         let lines = getline(firstline, lastline)
         let flag = s:contains_only_digits(lines) ? ' n' : ''
-        exe range.'sort'.flag
+        exe range..'sort'..flag
 
     elseif s:how is# 'reverse'
         let [fen_save, winid, bufnr] = [&l:fen, win_getid(), bufnr('%')]
         try
             let &l:fen = 0
-            exe 'keepj keepp '.range.'g/^/m '.(firstline - 1)
+            exe 'keepj keepp '..range..'g/^/m '..(firstline - 1)
         finally
             if winbufnr(winid) == bufnr
                 let [tabnr, winnr] = win_id2tabwin(winid)
@@ -66,7 +66,7 @@ fu s:reorder_lines() abort "{{{2
         endtry
 
     elseif s:how is# 'shuf'
-        exe 'keepj keepp '.range.'!shuf'
+        exe 'keepj keepp '..range..'!shuf'
     endif
 endfu
 
