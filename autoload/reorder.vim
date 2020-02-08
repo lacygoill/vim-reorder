@@ -66,7 +66,7 @@ fu s:reorder_lines() abort "{{{2
         endtry
 
     elseif s:how is# 'shuf'
-        exe 'keepj keepp '..range..'!shuf'
+        exe 'sil keepj keepp '..range..'!shuf'
     endif
 endfu
 
