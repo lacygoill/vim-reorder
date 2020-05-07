@@ -32,7 +32,7 @@ fu reorder#op(type) abort "{{{2
         endtry
     endif
 
-    " don't delete `s:how`, it would break the redo command
+    " don't delete `s:how`, it would break the dot command
     unlet! s:type
 endfu
 
