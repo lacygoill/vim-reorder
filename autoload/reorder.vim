@@ -1,4 +1,10 @@
 " Interface {{{1
+fu reorder#setup(order_type) abort "{{{2
+    let s:how = a:order_type
+    let &opfunc = 'reorder#op'
+    return 'g@'
+endfu
+
 fu reorder#op(type) abort "{{{2
     let s:type = a:type
 
@@ -35,7 +41,7 @@ fu reorder#op(type) abort "{{{2
     " don't delete `s:how`, it would break the dot command
     unlet! s:type
 endfu
-
+"}}}1
 " Core {{{1
 fu s:paste_new_text(contents) abort "{{{2
     let reg_type = (s:type is# 'block' || s:type is# "\<c-v>") ? 'b' : ''
@@ -120,7 +126,7 @@ fu s:reorder_non_linewise_text() abort "{{{2
        \ ?     join(reverse(texts_to_reorder), sep_join)
        \ :     join(systemlist('shuf', texts_to_reorder), sep_join)
 endfu
-
+"}}}1
 " Utility {{{1
 fu s:contains_only_digits(...) abort "{{{2
     " if  the text  contains  only  digits, we  want  a  numerical sorting  (not
@@ -134,6 +140,3 @@ fu s:contains_only_digits(...) abort "{{{2
     return empty(texts)
 endfu
 
-fu reorder#set_how(order_type) abort "{{{2
-    let s:how = a:order_type
-endfu
