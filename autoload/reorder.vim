@@ -8,22 +8,16 @@ endfu
 fu reorder#op(type) abort "{{{2
     let s:type = a:type
 
-    if a:type is# 'line' || a:type is# 'V'
+    if a:type is# 'line'
         call s:reorder_lines()
     else
-        let cb_save  = &cb
-        let sel_save = &selection
-        let reg_save = ['"', getreg('"'), getregtype('"')]
+        let [cb_save, sel_save] = [&cb, &sel]
+        let reg_save = getreginfo('"')
         try
-            set cb-=unnamed cb-=unnamedplus
-            set selection=inclusive
+            set cb-=unnamed cb-=unnamedplus sel=inclusive
 
             if s:type is# 'char'
                 norm! `[v`]y
-            elseif s:type is# 'v'
-                norm! `<v`>y
-            elseif s:type is# "\<c-v>"
-                norm! gvy
             elseif s:type is# 'block'
                 exe "norm! `[\<c-v>`]y"
             endif
@@ -32,9 +26,8 @@ fu reorder#op(type) abort "{{{2
         catch
             return lg#catch()
         finally
-            let &cb  = cb_save
-            let &sel = sel_save
-            call call('setreg', reg_save)
+            let [&cb, &sel] = [cb_save, sel_save]
+            call setreg('"', reg_save)
         endtry
     endif
 
@@ -44,15 +37,28 @@ endfu
 "}}}1
 " Core {{{1
 fu s:paste_new_text(contents) abort "{{{2
-    let reg_type = (s:type is# 'block' || s:type is# "\<c-v>") ? 'b' : ''
-    call setreg('"', a:contents, reg_type)
-    norm! gv""p
+    let reg_save = getreginfo('"')
+    let new = deepcopy(reg_save)
+    let contents = a:contents
+    let type = s:type is# 'block' ? 'b' : 'c'
+    call extend(new, #{regcontents: a:contents, regtype: type})
+    call setreg('"', new)
+    let [cb_save, sel_save] = [&cb, &sel]
+    try
+        set cb-=unnamed cb-=unnamedplus sel=inclusive
+        norm! gvp
+    catch
+        return lg#catch()
+    finally
+        let [&cb, &sel] = [cb_save, sel_save]
+        call setreg('"', reg_save)
+    endtry
 endfu
 
 fu s:reorder_lines() abort "{{{2
-    let range = s:type is# 'line' ? "'[,']" : "'<,'>"
-    let firstline = s:type is# 'line' ? line("'[") : line("'<")
-    let lastline = s:type is# 'line' ? line("']") : line("'>")
+    let range = "'[,']"
+    let firstline = line("'[")
+    let lastline = line("']")
 
     if s:how is# 'sort'
         let lines = getline(firstline, lastline)
@@ -77,13 +83,21 @@ fu s:reorder_lines() abort "{{{2
 endfu
 
 fu s:reorder_non_linewise_text() abort "{{{2
-    if s:type is# 'block' || s:type is# "\<c-v>"
-        let texts_to_reorder = split(@")
-        let sep_join = "\n"
-        "   │
-        "   └ separator which will be added between 2 consecutive texts
+    let text = getreg('"', 1, 1)
+    if len(text) == 0 | return [] | endif
 
-    elseif s:type is# 'char' || s:type is# 'v'
+    if s:type is# 'block'
+        " `text` is a list of possibly multiple strings
+        " We write the splitting pattern explicitly to preserve possible NULs.{{{
+        "
+        " NULs are translated  into newlines; and, without  a pattern, `split()`
+        " splits at newlines (the default pattern is probably: `\_s\+`).
+        "}}}
+        let texts_to_reorder = map(text, {_,v -> split(v, '\s\+')})->flatten()
+
+    elseif s:type is# 'char'
+        " `text` is a list containing a single string
+        let text = text[0]
         " Try to guess what is the separator between the texts we want to sort.{{{
         " Could be a comma, a semicolon, or spaces.
         " We want a pattern, so `sep_split` may be:
@@ -92,13 +106,13 @@ fu s:reorder_non_linewise_text() abort "{{{2
         "     ';\s*'
         "     '\s\+'
         "}}}
-        let sep_split = @" =~# '[,;]'
-                    \ ?     matchstr(@", '[,;]').'\s*'
+        let sep_split = text =~# '[,;]'
+                    \ ?     matchstr(text, '[,;]')..'\s*'
                     \ :     '\s\+'
 
-        let texts_to_reorder = split(@", sep_split)
+        let texts_to_reorder = split(text, sep_split)
         " remove surrounding whitespace
-        call map(texts_to_reorder, {_,v -> matchstr(v, '^\s*\zs.\{-}\ze\s*$')})
+        call map(texts_to_reorder, 'trim(v:val)')
 
         " `join()` doesn't interpret its 2nd argument the same way `split()` does:{{{
         "
@@ -114,17 +128,27 @@ fu s:reorder_non_linewise_text() abort "{{{2
         "     ';'
         "     ';'
         "}}}
-        let has_space = !empty(matchstr(@", '\s'))
-        let rep = has_space ? ' ' : ''
-        let sep_join = substitute(sep_split, '^\\s\\+$\|\\s\*$', rep, '')
+        let pat = '^\\s\\+$\|\\s\*$'
+        let rep = text =~# '\s' ? ' ' : ''
+        let sep_join = substitute(sep_split, pat, rep, '')
+        "   │
+        "   └ separator which will be added between 2 consecutive texts
     endif
 
-    let func = s:contains_only_digits(texts_to_reorder) ? 'N' : ''
-    sil return s:how is# 'sort'
-       \ ?     join(sort(texts_to_reorder, func), sep_join)
-       \ : s:how is# 'reverse'
-       \ ?     join(reverse(texts_to_reorder), sep_join)
-       \ :     join(systemlist('shuf', texts_to_reorder), sep_join)
+    if s:how is# 'sort'
+        let func = s:contains_only_digits(texts_to_reorder) ? 'N' : ''
+        let sorted = sort(texts_to_reorder, func)
+    elseif s:how is# 'reverse'
+        let sorted = reverse(texts_to_reorder)
+    else
+        sil let sorted = systemlist('shuf', texts_to_reorder)
+    endif
+
+    if s:type is 'block'
+        return reduce(sorted, {a,v -> a + [v]}, [])
+    else
+        return [join(sorted, sep_join)]
+    endif
 endfu
 "}}}1
 " Utility {{{1
