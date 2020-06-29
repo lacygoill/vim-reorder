@@ -14,7 +14,7 @@ fu reorder#op(type) abort "{{{2
         let [cb_save, sel_save] = [&cb, &sel]
         let reg_save = getreginfo('"')
         try
-            set cb-=unnamed cb-=unnamedplus sel=inclusive
+            set cb= sel=inclusive
 
             if s:type is# 'char'
                 norm! `[v`]y
@@ -38,15 +38,17 @@ endfu
 " Core {{{1
 fu s:paste_new_text(contents) abort "{{{2
     let reg_save = getreginfo('"')
+    let [cb_save, sel_save] = [&cb, &sel]
+
     let new = deepcopy(reg_save)
     let contents = a:contents
     let type = s:type is# 'block' ? 'b' : 'c'
     call extend(new, #{regcontents: a:contents, regtype: type})
-    call setreg('"', new)
-    let [cb_save, sel_save] = [&cb, &sel]
+
     try
-        set cb-=unnamed cb-=unnamedplus sel=inclusive
-        norm! gvp
+        call setreg('"', new)
+        set cb= sel=inclusive
+        norm! gvp`[
     catch
         return lg#catch()
     finally
@@ -78,7 +80,10 @@ fu s:reorder_lines() abort "{{{2
         endtry
 
     elseif s:how is# 'shuf'
-        exe 'sil keepj keepp '..range..'!shuf'
+        " Alternative:
+        "     exe 'sil keepj keepp '..range..'!shuf'
+        let randomized = getline(firstline, lastline)->s:randomize()
+        call setline(firstline, randomized)
     endif
 endfu
 
@@ -141,7 +146,7 @@ fu s:reorder_non_linewise_text() abort "{{{2
     elseif s:how is# 'reverse'
         let sorted = reverse(texts_to_reorder)
     else
-        sil let sorted = systemlist('shuf', texts_to_reorder)
+        let sorted = s:randomize(texts_to_reorder)
     endif
 
     if s:type is 'block'
@@ -162,5 +167,13 @@ fu s:contains_only_digits(...) abort "{{{2
     call map(texts, {_,v -> matchstr(v, '\D')})
     call filter(texts, {_,v -> v != ''})
     return empty(texts)
+endfu
+
+fu s:randomize(list) abort "{{{2
+    " Alternative:
+    "     sil return systemlist('shuf', a:list)
+    return len(a:list)
+        \ ->range()
+        \ ->map('remove(a:list, rand(srand()) % len(a:list))')
 endfu
 
