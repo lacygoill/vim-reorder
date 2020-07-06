@@ -1,7 +1,8 @@
 " Interface {{{1
 fu reorder#setup(order_type) abort "{{{2
     let s:how = a:order_type
-    let &opfunc = 'reorder#op'
+    let &opfunc = 'lg#opfunc'
+    let g:opfunc_core = 'reorder#op'
     return 'g@'
 endfu
 
@@ -11,24 +12,7 @@ fu reorder#op(type) abort "{{{2
     if a:type is# 'line'
         call s:reorder_lines()
     else
-        let [cb_save, sel_save] = [&cb, &sel]
-        let reg_save = getreginfo('"')
-        try
-            set cb= sel=inclusive
-
-            if s:type is# 'char'
-                norm! `[v`]y
-            elseif s:type is# 'block'
-                exe "norm! `[\<c-v>`]y"
-            endif
-
-            call s:paste_new_text(s:reorder_non_linewise_text())
-        catch
-            return lg#catch()
-        finally
-            let [&cb, &sel] = [cb_save, sel_save]
-            call setreg('"', reg_save)
-        endtry
+        call s:paste_new_text(s:reorder_non_linewise_text())
     endif
 
     " don't delete `s:how`, it would break the dot command
