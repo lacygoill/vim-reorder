@@ -2,7 +2,9 @@
 fu reorder#setup(order_type) abort "{{{2
     let s:how = a:order_type
     let &opfunc = 'lg#opfunc'
-    let g:opfunc_core = 'reorder#op'
+    let g:opfunc = {
+        \ 'core': 'reorder#op',
+        \ }
     return 'g@'
 endfu
 
