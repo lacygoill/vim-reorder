@@ -1,7 +1,10 @@
+import Catch from 'lg.vim'
+import Opfunc from 'lg.vim' | const s:SID = execute('fu s:Opfunc')->matchstr('\C\<def\s\+\zs<SNR>\d\+_')
+
 " Interface {{{1
 fu reorder#setup(order_type) abort "{{{2
     let s:how = a:order_type
-    let &opfunc = 'lg#opfunc'
+    let &opfunc = s:SID .. 'Opfunc'
     let g:opfunc = {
         \ 'core': 'reorder#op',
         \ }
@@ -14,7 +17,7 @@ fu reorder#op(type) abort "{{{2
     if a:type is# 'line'
         call s:reorder_lines()
     else
-        call s:paste_new_text(s:reorder_non_linewise_text())
+        call s:reorder_non_linewise_text()->s:paste_new_text()
     endif
 
     " don't delete `s:how`, it would break the dot command
@@ -36,7 +39,7 @@ fu s:paste_new_text(contents) abort "{{{2
         set cb= sel=inclusive
         norm! gvp`[
     catch
-        return lg#catch()
+        return s:Catch()
     finally
         let [&cb, &sel] = [cb_save, sel_save]
         call setreg('"', reg_save)
@@ -51,13 +54,13 @@ fu s:reorder_lines() abort "{{{2
     if s:how is# 'sort'
         let lines = getline(firstline, lastline)
         let flag = s:contains_only_digits(lines) ? ' n' : ''
-        exe range..'sort'..flag
+        exe range .. 'sort' .. flag
 
     elseif s:how is# 'reverse'
         let [fen_save, winid, bufnr] = [&l:fen, win_getid(), bufnr('%')]
         try
             let &l:fen = 0
-            exe 'keepj keepp '..range..'g/^/m '..(firstline - 1)
+            exe 'keepj keepp ' .. range .. 'g/^/m ' .. (firstline - 1)
         finally
             if winbufnr(winid) == bufnr
                 let [tabnr, winnr] = win_id2tabwin(winid)
@@ -67,7 +70,7 @@ fu s:reorder_lines() abort "{{{2
 
     elseif s:how is# 'shuf'
         " Alternative:
-        "     exe 'sil keepj keepp '..range..'!shuf'
+        "     exe 'sil keepj keepp ' .. range .. '!shuf'
         let randomized = getline(firstline, lastline)->s:randomize()
         call setline(firstline, randomized)
     endif
@@ -84,7 +87,7 @@ fu s:reorder_non_linewise_text() abort "{{{2
         " NULs are translated  into newlines; and, without  a pattern, `split()`
         " splits at newlines (the default pattern is probably: `\_s\+`).
         "}}}
-        let texts_to_reorder = map(text, {_,v -> split(v, '\s\+')})->flatten()
+        let texts_to_reorder = map(text, {_, v -> split(v, '\s\+')})->flatten()
 
     elseif s:type is# 'char'
         " `text` is a list containing a single string
@@ -98,8 +101,8 @@ fu s:reorder_non_linewise_text() abort "{{{2
         "     '\s\+'
         "}}}
         let sep_split = text =~# '[,;]'
-                    \ ?     matchstr(text, '[,;]')..'\s*'
-                    \ :     '\s\+'
+            \ ?     matchstr(text, '[,;]') .. '\s*'
+            \ :     '\s\+'
 
         let texts_to_reorder = split(text, sep_split)
         " remove surrounding whitespace
@@ -136,7 +139,7 @@ fu s:reorder_non_linewise_text() abort "{{{2
     endif
 
     if s:type is 'block'
-        return reduce(sorted, {a,v -> a + [v]}, [])
+        return reduce(sorted, {a, v -> a + [v]}, [])
     else
         return [join(sorted, sep_join)]
     endif
@@ -150,8 +153,8 @@ fu s:contains_only_digits(...) abort "{{{2
     " Vim passes a variable to a function by reference not by copy,
     " and we don't want `map()` and `filter()` to alter the text.
     let texts = deepcopy(a:1)
-    call map(texts, {_,v -> matchstr(v, '\D')})
-    call filter(texts, {_,v -> v != ''})
+    call map(texts, {_, v -> matchstr(v, '\D')})
+    call filter(texts, {_, v -> v != ''})
     return empty(texts)
 endfu
 
@@ -160,6 +163,6 @@ fu s:randomize(list) abort "{{{2
     "     sil return systemlist('shuf', a:list)
     return len(a:list)
         \ ->range()
-        \ ->map('remove(a:list, rand(srand()) % len(a:list))')
+        \ ->map('remove(a:list, srand()->rand() % len(a:list))')
 endfu
 

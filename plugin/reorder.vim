@@ -6,15 +6,15 @@ let g:loaded_reorder = 1
 " Mappings {{{1
 
 nno <expr><unique> gr  reorder#setup('reverse')
-nno <expr><unique> grr reorder#setup('reverse')..'_'
+nno <expr><unique> grr reorder#setup('reverse') .. '_'
 xno <expr><unique> gr  reorder#setup('reverse')
 
 nno <expr><unique> gs  reorder#setup('sort')
-nno <expr><unique> gss reorder#setup('sort')..'_'
+nno <expr><unique> gss reorder#setup('sort') .. '_'
 xno <expr><unique> gs  reorder#setup('sort')
 
 nno <expr><unique> gS  reorder#setup('shuf')
-nno <expr><unique> gSS reorder#setup('shuf')..'_'
+nno <expr><unique> gSS reorder#setup('shuf') .. '_'
 xno <expr><unique> gS  reorder#setup('shuf')
 
 " Usage: {{{1
