@@ -1,5 +1,5 @@
-import Catch from 'lg.vim'
-import Opfunc from 'lg.vim' | const s:SID = execute('fu s:Opfunc')->matchstr('\C\<def\s\+\zs<SNR>\d\+_')
+import {Catch, Opfunc} from 'lg.vim'
+const s:SID = execute('fu s:Opfunc')->matchstr('\C\<def\s\+\zs<SNR>\d\+_')
 
 " Interface {{{1
 fu reorder#setup(order_type) abort "{{{2
