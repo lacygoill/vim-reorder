@@ -151,7 +151,7 @@ fu s:contains_only_digits(...) abort "{{{2
     " lexicographic)
 
     " Vim passes a variable to a function by reference not by copy,
-    " and we don't want `map()` and `filter()` to alter the text.
+    " and we don't want `map()` nor `filter()` to alter the text.
     let texts = deepcopy(a:1)
     call map(texts, {_, v -> matchstr(v, '\D')})
     call filter(texts, {_, v -> v != ''})
