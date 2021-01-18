@@ -1,168 +1,185 @@
+vim9 noclear
+
+if exists('loaded') | finish | endif
+var loaded = true
+
 import {Catch, Opfunc} from 'lg.vim'
-const s:SID = execute('fu s:Opfunc')->matchstr('\C\<def\s\+\zs<SNR>\d\+_')
+const SID: string = execute('fu Opfunc')->matchstr('\C\<def\s\+\zs<SNR>\d\+_')
 
-" Interface {{{1
-fu reorder#setup(order_type) abort "{{{2
-    let s:how = a:order_type
-    let &opfunc = s:SID .. 'Opfunc'
-    let g:opfunc = {
-        \ 'core': 'reorder#op',
-        \ }
+# Interface {{{1
+def reorder#setup(order_type: string): string #{{{2
+    how = order_type
+    &opfunc = SID .. 'Opfunc'
+    g:opfunc = {core: 'reorder#op'}
     return 'g@'
-endfu
+enddef
 
-fu reorder#op(type) abort "{{{2
-    let s:type = a:type
+var how: string
 
-    if a:type is# 'line'
-        call s:reorder_lines()
+def reorder#op(arg_type: string) #{{{2
+    stype = arg_type
+
+    if arg_type == 'line'
+        ReorderLines()
     else
-        call s:reorder_non_linewise_text()->s:paste_new_text()
+        ReorderNonLinewiseText()->PasteNewText()
     endif
 
-    " don't delete `s:how`, it would break the dot command
-    unlet! s:type
-endfu
-"}}}1
-" Core {{{1
-fu s:paste_new_text(contents) abort "{{{2
-    let reg_save = getreginfo('"')
-    let [cb_save, sel_save] = [&cb, &sel]
+    # don't delete/reset `s:how`, it would break the dot command
+    stype = ''
+enddef
 
-    let new = deepcopy(reg_save)
-    let contents = a:contents
-    let type = s:type is# 'block' ? 'b' : 'c'
-    call extend(new, #{regcontents: a:contents, regtype: type})
+var stype: string
+#}}}1
+# Core {{{1
+def PasteNewText(contents: list<string>) #{{{2
+    var reg_save: dict<any> = getreginfo('"')
+    var cb_save: string = &cb
+    var sel_save: string = &sel
+
+    var new: dict<any> = deepcopy(reg_save)
+    var type: string = stype == 'block' ? 'b' : 'c'
+    extend(new, {regcontents: contents, regtype: type})
 
     try
-        call setreg('"', new)
+        setreg('"', new)
         set cb= sel=inclusive
         norm! gvp`[
     catch
-        return s:Catch()
+        Catch()
+        return
     finally
-        let [&cb, &sel] = [cb_save, sel_save]
-        call setreg('"', reg_save)
+        [&cb, &sel] = [cb_save, sel_save]
+        setreg('"', reg_save)
     endtry
-endfu
+enddef
 
-fu s:reorder_lines() abort "{{{2
-    let range = "'[,']"
-    let firstline = line("'[")
-    let lastline = line("']")
+def ReorderLines() #{{{2
+    var range: string = ":'[,']"
+    var firstline: number = line("'[")
+    var lastline: number = line("']")
 
-    if s:how is# 'sort'
-        let lines = getline(firstline, lastline)
-        let flag = s:contains_only_digits(lines) ? ' n' : ''
+    if how == 'sort'
+        var lines: list<string> = getline(firstline, lastline)
+        var flag: string = ContainsOnlyDigits(lines) ? ' n' : ''
         exe range .. 'sort' .. flag
 
-    elseif s:how is# 'reverse'
-        let [fen_save, winid, bufnr] = [&l:fen, win_getid(), bufnr('%')]
+    elseif how == 'reverse'
+        var fen_save: bool = &l:fen
+        var winid: number = win_getid()
+        var bufnr: number = bufnr('%')
+        [fen_save, winid, bufnr] = [&l:fen, win_getid(), bufnr('%')]
         try
-            let &l:fen = 0
+            &l:fen = 0
             exe 'keepj keepp ' .. range .. 'g/^/m ' .. (firstline - 1)
         finally
             if winbufnr(winid) == bufnr
-                let [tabnr, winnr] = win_id2tabwin(winid)
-                call settabwinvar(tabnr, winnr, '&fen', fen_save)
+                var tabnr: number
+                var winnr: number
+                [tabnr, winnr] = win_id2tabwin(winid)
+                settabwinvar(tabnr, winnr, '&fen', fen_save)
             endif
         endtry
 
-    elseif s:how is# 'shuf'
-        " Alternative:
-        "     exe 'sil keepj keepp ' .. range .. '!shuf'
-        let randomized = getline(firstline, lastline)->s:randomize()
-        call setline(firstline, randomized)
+    elseif how == 'shuf'
+        # Alternative:
+        #     exe 'sil keepj keepp ' .. range .. '!shuf'
+        var randomized: list<string> = getline(firstline, lastline)->Randomize()
+        setline(firstline, randomized)
     endif
-endfu
+enddef
 
-fu s:reorder_non_linewise_text() abort "{{{2
-    let text = getreg('"', 1, 1)
-    if len(text) == 0 | return [] | endif
-
-    if s:type is# 'block'
-        " `text` is a list of possibly multiple strings
-        " We write the splitting pattern explicitly to preserve possible NULs.{{{
-        "
-        " NULs are translated  into newlines; and, without  a pattern, `split()`
-        " splits at newlines (the default pattern is probably: `\_s\+`).
-        "}}}
-        let texts_to_reorder = map(text, {_, v -> split(v, '\s\+')})->flatten()
-
-    elseif s:type is# 'char'
-        " `text` is a list containing a single string
-        let text = text[0]
-        " Try to guess what is the separator between the texts we want to sort.{{{
-        " Could be a comma, a semicolon, or spaces.
-        " We want a pattern, so `sep_split` may be:
-        "
-        "     ',\s*'
-        "     ';\s*'
-        "     '\s\+'
-        "}}}
-        let sep_split = text =~# '[,;]'
-            \ ?     matchstr(text, '[,;]') .. '\s*'
-            \ :     '\s\+'
-
-        let texts_to_reorder = split(text, sep_split)
-        " remove surrounding whitespace
-        call map(texts_to_reorder, 'trim(v:val)')
-
-        " `join()` doesn't interpret its 2nd argument the same way `split()` does:{{{
-        "
-        "     split():  regex
-        "     join():   literal string
-        "
-        " `sep_join` may be:
-        "
-        "     ', '
-        "     '; '
-        "     ' '
-        "     ','
-        "     ';'
-        "     ';'
-        "}}}
-        let pat = '^\\s\\+$\|\\s\*$'
-        let rep = text =~# '\s' ? ' ' : ''
-        let sep_join = substitute(sep_split, pat, rep, '')
-        "   │
-        "   └ separator which will be added between 2 consecutive texts
+def ReorderNonLinewiseText(): list<string> #{{{2
+    var text: list<string> = getreg('"', true, true)
+    if len(text) == 0
+        return []
     endif
 
-    if s:how is# 'sort'
-        let func = s:contains_only_digits(texts_to_reorder) ? 'N' : ''
-        let sorted = sort(texts_to_reorder, func)
-    elseif s:how is# 'reverse'
-        let sorted = reverse(texts_to_reorder)
+    var sep_join: string
+    var texts_to_reorder: list<string>
+    if stype == 'block'
+        # `text` is a list of possibly multiple strings
+        # We write the splitting pattern explicitly to preserve possible NULs.{{{
+        #
+        # NULs are translated  into newlines; and, without  a pattern, `split()`
+        # splits at newlines (the default pattern is probably: `\_s\+`).
+        #}}}
+        texts_to_reorder = mapnew(text, (_, v) => split(v, '\s\+'))->flatten()
+
+    elseif stype == 'char'
+        # `text` is a list containing a single string
+        var text_inside: string = text[0]
+        # Try to guess what is the separator between the texts we want to sort.{{{
+        # Could be a comma, a semicolon, or spaces.
+        # We want a pattern, so `sep_split` may be:
+        #
+        #     ',\s*'
+        #     ';\s*'
+        #     '\s\+'
+        #}}}
+        var sep_split: string = text_inside =~ '[,;]'
+            ?     matchstr(text_inside, '[,;]') .. '\s*'
+            :     '\s\+'
+
+        texts_to_reorder = split(text_inside, sep_split)
+        # remove surrounding whitespace
+        map(texts_to_reorder, (_, v) => trim(v))
+
+        # `join()` doesn't interpret its 2nd argument the same way `split()` does:{{{
+        #
+        #     split():  regex
+        #     join():   literal string
+        #
+        # `sep_join` may be:
+        #
+        #     ', '
+        #     '; '
+        #     ' '
+        #     ','
+        #     ';'
+        #     ';'
+        #}}}
+        var pat: string = '^\\s\\+$\|\\s\*$'
+        var rep: string = text_inside =~ '\s' ? ' ' : ''
+        # separator which will be added between 2 consecutive texts
+        sep_join = substitute(sep_split, pat, rep, '')
+    endif
+
+    var sorted: list<string>
+    if how == 'sort'
+        var func: string = ContainsOnlyDigits(texts_to_reorder) ? 'N' : ''
+        sorted = sort(texts_to_reorder, func)
+    elseif how == 'reverse'
+        sorted = reverse(texts_to_reorder)
     else
-        let sorted = s:randomize(texts_to_reorder)
+        sorted = Randomize(texts_to_reorder)
     endif
 
-    if s:type is 'block'
-        return reduce(sorted, {a, v -> a + [v]}, [])
+    if stype == 'block'
+        return reduce(sorted, (a, v) => a + [v], [])
     else
         return [join(sorted, sep_join)]
     endif
-endfu
-"}}}1
-" Utility {{{1
-fu s:contains_only_digits(...) abort "{{{2
-    " if  the text  contains  only  digits, we  want  a  numerical sorting  (not
-    " lexicographic)
+enddef
+#}}}1
+# Utility {{{1
+def ContainsOnlyDigits(to_reorder: list<string>): bool #{{{2
+    # if  the text  contains  only  digits, we  want  a  numerical sorting  (not
+    # lexicographic)
 
-    " Vim passes a variable to a function by reference not by copy,
-    " and we don't want `map()` nor `filter()` to alter the text.
-    let texts = deepcopy(a:1)
-    call map(texts, {_, v -> matchstr(v, '\D')})
-    call filter(texts, {_, v -> v != ''})
+    # Vim passes a variable to a function by reference not by copy,
+    # and we don't want `map()` nor `filter()` to alter the text.
+    var texts: list<string> = deepcopy(to_reorder)
+        ->map((_, v) => matchstr(v, '\D'))
+        ->filter((_, v) => v != '')
     return empty(texts)
-endfu
+enddef
 
-fu s:randomize(list) abort "{{{2
-    " Alternative:
-    "     sil return systemlist('shuf', a:list)
-    return len(a:list)
-        \ ->range()
-        \ ->map('remove(a:list, srand()->rand() % len(a:list))')
-endfu
+def Randomize(list: list<string>): list<string> #{{{2
+    # Alternative:
+    #     sil return systemlist('shuf', a:list)
+    return len(list)
+        ->range()
+        ->mapnew((_, v) => remove(list, srand()->rand() % len(list)))
+enddef
 
