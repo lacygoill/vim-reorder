@@ -25,7 +25,7 @@ def reorder#op(arg_type: string) #{{{2
         ReorderNonLinewiseText()->PasteNewText()
     endif
 
-    # don't delete/reset `s:how`, it would break the dot command
+    # don't delete/reset `how`, it would break the dot command
     stype = ''
 enddef
 
@@ -104,7 +104,7 @@ def ReorderNonLinewiseText(): list<string> #{{{2
         # NULs are translated  into newlines; and, without  a pattern, `split()`
         # splits at newlines (the default pattern is probably: `\_s\+`).
         #}}}
-        texts_to_reorder = mapnew(text, (_, v) => split(v, '\s\+'))->flatten()
+        texts_to_reorder = mapnew(text, (_, v) => split(v, '\s\+'))->flattennew()
 
     elseif stype == 'char'
         # `text` is a list containing a single string
