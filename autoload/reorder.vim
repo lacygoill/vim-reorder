@@ -3,7 +3,11 @@ vim9script noclear
 if exists('loaded') | finish | endif
 var loaded = true
 
-import {Catch, Opfunc} from 'lg.vim'
+import {
+    Catch,
+    Opfunc,
+    } from 'lg.vim'
+
 const SID: string = execute('fu Opfunc')->matchstr('\C\<def\s\+\zs<SNR>\d\+_')
 
 # Interface {{{1
@@ -104,7 +108,9 @@ def ReorderNonLinewiseText(): list<string> #{{{2
         # NULs are translated  into newlines; and, without  a pattern, `split()`
         # splits at newlines (the default pattern is probably: `\_s\+`).
         #}}}
-        texts_to_reorder = mapnew(text, (_, v) => split(v, '\s\+'))->flattennew()
+        texts_to_reorder = text
+            ->mapnew((_, v: string): list<string> => split(v, '\s\+'))
+            ->flattennew()
 
     elseif stype == 'char'
         # `text` is a list containing a single string
@@ -121,9 +127,10 @@ def ReorderNonLinewiseText(): list<string> #{{{2
             ?     matchstr(text_inside, '[,;]') .. '\s*'
             :     '\s\+'
 
-        texts_to_reorder = split(text_inside, sep_split)
-        # remove surrounding whitespace
-        map(texts_to_reorder, (_, v) => trim(v))
+        texts_to_reorder = text_inside
+            ->split(sep_split)
+            # remove surrounding whitespace
+            ->map((_, v: string): string => trim(v))
 
         # `join()` doesn't interpret its 2nd argument the same way `split()` does:{{{
         #
@@ -156,7 +163,7 @@ def ReorderNonLinewiseText(): list<string> #{{{2
     endif
 
     if stype == 'block'
-        return reduce(sorted, (a, v) => a + [v], [])
+        return sorted
     else
         return [join(sorted, sep_join)]
     endif
@@ -164,22 +171,24 @@ enddef
 #}}}1
 # Utility {{{1
 def ContainsOnlyDigits(to_reorder: list<string>): bool #{{{2
-    # if  the text  contains  only  digits, we  want  a  numerical sorting  (not
-    # lexicographic)
+# if  the  text  contains  only  digits,   we  want  a  numerical  sorting  (not
+# lexicographic)
 
-    # Vim passes a variable to a function by reference not by copy,
-    # and we don't want `map()` nor `filter()` to alter the text.
-    var texts: list<string> = deepcopy(to_reorder)
-        ->map((_, v) => matchstr(v, '\D'))
-        ->filter((_, v) => v != '')
+    var texts: list<string> = to_reorder
+        # Vim passes a variable  to a function by reference not  by copy, and we
+        # don't want `map()` nor `filter()` to alter the text; hence `mapnew()`,
+        # and not `map()`.
+        ->mapnew((_, v: string): string => matchstr(v, '\D'))
+        ->filter((_, v: string): bool => v != '')
+
     return empty(texts)
 enddef
 
 def Randomize(list: list<string>): list<string> #{{{2
     # Alternative:
-    #     sil return systemlist('shuf', a:list)
+    #     sil return systemlist('shuf', list)
     return len(list)
         ->range()
-        ->mapnew((_, v) => remove(list, srand()->rand() % len(list)))
+        ->mapnew((_, __) => remove(list, srand()->rand() % len(list)))
 enddef
 
