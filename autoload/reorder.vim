@@ -149,7 +149,7 @@ def ReorderNonLinewiseText(): list<string> #{{{2
         var pat: string = '^\\s\\+$\|\\s\*$'
         var rep: string = text_inside =~ '\s' ? ' ' : ''
         # separator which will be added between 2 consecutive texts
-        sep_join = substitute(sep_split, pat, rep, '')
+        sep_join = sep_split->substitute(pat, rep, '')
     endif
 
     var sorted: list<string>
@@ -189,6 +189,6 @@ def Randomize(list: list<string>): list<string> #{{{2
     #     sil return systemlist('shuf', list)
     return len(list)
         ->range()
-        ->mapnew((_, __) => remove(list, srand()->rand() % len(list)))
+        ->mapnew((_, __) => list->remove(srand()->rand() % len(list)))
 enddef
 
