@@ -6,7 +6,7 @@ var loaded = true
 import {
     Catch,
     Opfunc,
-    } from 'lg.vim'
+} from 'lg.vim'
 
 const SID: string = execute('fu Opfunc')->matchstr('\C\<def\s\+\zs<SNR>\d\+_')
 
@@ -165,7 +165,7 @@ def ReorderNonLinewiseText(): list<string> #{{{2
     if stype == 'block'
         return sorted
     else
-        return [join(sorted, sep_join)]
+        return [sorted->join(sep_join)]
     endif
 enddef
 #}}}1
@@ -189,6 +189,6 @@ def Randomize(list: list<string>): list<string> #{{{2
     #     sil return systemlist('shuf', list)
     return len(list)
         ->range()
-        ->mapnew((_, __) => list->remove(srand()->rand() % len(list)))
+        ->mapnew((_, _) => list->remove(srand()->rand() % len(list)))
 enddef
 
