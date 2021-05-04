@@ -10,17 +10,19 @@ import {
 
 const SID: string = execute('fu Opfunc')->matchstr('\C\<def\s\+\zs<SNR>\d\+_')
 
+var how: string
+var stype: string
+
 # Interface {{{1
 def reorder#setup(order_type: string): string #{{{2
     how = order_type
     &opfunc = SID .. 'Opfunc'
-    g:opfunc = {core: 'reorder#op'}
+    g:opfunc = {core: Reorder}
     return 'g@'
 enddef
-
-var how: string
-
-def reorder#op(arg_type: string) #{{{2
+#}}}1
+# Core {{{1
+def Reorder(arg_type: string) #{{{2
     stype = arg_type
 
     if arg_type == 'line'
@@ -33,9 +35,6 @@ def reorder#op(arg_type: string) #{{{2
     stype = ''
 enddef
 
-var stype: string
-#}}}1
-# Core {{{1
 def PasteNewText(contents: list<string>) #{{{2
     var reg_save: dict<any> = getreginfo('"')
     var cb_save: string = &cb
@@ -124,7 +123,7 @@ def ReorderNonLinewiseText(): list<string> #{{{2
         #     '\s\+'
         #}}}
         var sep_split: string = text_inside =~ '[,;]'
-            ?     matchstr(text_inside, '[,;]') .. '\s*'
+            ?     text_inside->matchstr('[,;]') .. '\s*'
             :     '\s\+'
 
         texts_to_reorder = text_inside
@@ -178,7 +177,7 @@ def ContainsOnlyDigits(to_reorder: list<string>): bool #{{{2
         # Vim passes a variable  to a function by reference not  by copy, and we
         # don't want `map()` nor `filter()` to alter the text; hence `mapnew()`,
         # and not `map()`.
-        ->mapnew((_, v: string): string => matchstr(v, '\D'))
+        ->mapnew((_, v: string): string => v->matchstr('\D'))
         ->filter((_, v: string): bool => v != '')
 
     return empty(texts)
