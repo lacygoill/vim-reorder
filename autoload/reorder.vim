@@ -16,8 +16,8 @@ var stype: string
 # Interface {{{1
 def reorder#setup(order_type: string): string #{{{2
     how = order_type
-    &opfunc = SID .. 'Opfunc'
-    g:opfunc = {core: Reorder}
+    &operatorfunc = SID .. 'Opfunc'
+    g:operatorfunc = {core: Reorder}
     return 'g@'
 enddef
 #}}}1
@@ -37,8 +37,8 @@ enddef
 
 def PasteNewText(contents: list<string>) #{{{2
     var reg_save: dict<any> = getreginfo('"')
-    var cb_save: string = &cb
-    var sel_save: string = &sel
+    var clipboard_save: string = &clipboard
+    var selection_save: string = &selection
 
     var new: dict<any> = deepcopy(reg_save)
     var type: string = stype == 'block' ? 'b' : 'c'
@@ -46,13 +46,14 @@ def PasteNewText(contents: list<string>) #{{{2
 
     try
         setreg('"', new)
-        set cb= sel=inclusive
+        &clipboard = ''
+        &selection = 'inclusive'
         norm! gvp`[
     catch
         Catch()
         return
     finally
-        [&cb, &sel] = [cb_save, sel_save]
+        [&clipboard, &selection] = [clipboard_save, selection_save]
         setreg('"', reg_save)
     endtry
 enddef
@@ -68,19 +69,19 @@ def ReorderLines() #{{{2
         exe range .. 'sort' .. flag
 
     elseif how == 'reverse'
-        var fen_save: bool = &l:fen
+        var foldenable_save: bool = &l:foldenable
         var winid: number = win_getid()
         var bufnr: number = bufnr('%')
-        [fen_save, winid, bufnr] = [&l:fen, win_getid(), bufnr('%')]
+        [foldenable_save, winid, bufnr] = [&l:foldenable, win_getid(), bufnr('%')]
         try
-            &l:fen = 0
+            &l:foldenable = 0
             exe 'keepj keepp ' .. range .. 'g/^/m ' .. (firstline - 1)
         finally
             if winbufnr(winid) == bufnr
                 var tabnr: number
                 var winnr: number
                 [tabnr, winnr] = win_id2tabwin(winid)
-                settabwinvar(tabnr, winnr, '&fen', fen_save)
+                settabwinvar(tabnr, winnr, '&foldenable', foldenable_save)
             endif
         endtry
 
