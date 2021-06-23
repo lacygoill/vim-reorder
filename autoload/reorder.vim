@@ -74,7 +74,7 @@ def ReorderLines() #{{{2
         var bufnr: number = bufnr('%')
         [foldenable_save, winid, bufnr] = [&l:foldenable, win_getid(), bufnr('%')]
         try
-            &l:foldenable = 0
+            &l:foldenable = false
             exe 'keepj keepp ' .. range .. 'g/^/m ' .. (firstline - 1)
         finally
             if winbufnr(winid) == bufnr
