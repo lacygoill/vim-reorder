@@ -5,17 +5,17 @@ var loaded = true
 
 # Mappings {{{1
 
-nno <expr><unique> gr  reorder#setup('reverse')
-nno <expr><unique> grr reorder#setup('reverse') .. '_'
-xno <expr><unique> gr  reorder#setup('reverse')
+nnoremap <expr><unique> gr  reorder#setup('reverse')
+nnoremap <expr><unique> grr reorder#setup('reverse') .. '_'
+xnoremap <expr><unique> gr  reorder#setup('reverse')
 
-nno <expr><unique> gs  reorder#setup('sort')
-nno <expr><unique> gss reorder#setup('sort') .. '_'
-xno <expr><unique> gs  reorder#setup('sort')
+nnoremap <expr><unique> gs  reorder#setup('sort')
+nnoremap <expr><unique> gss reorder#setup('sort') .. '_'
+xnoremap <expr><unique> gs  reorder#setup('sort')
 
-nno <expr><unique> gS  reorder#setup('shuf')
-nno <expr><unique> gSS reorder#setup('shuf') .. '_'
-xno <expr><unique> gS  reorder#setup('shuf')
+nnoremap <expr><unique> gS  reorder#setup('shuf')
+nnoremap <expr><unique> gSS reorder#setup('shuf') .. '_'
+xnoremap <expr><unique> gS  reorder#setup('shuf')
 
 # Usage: {{{1
 

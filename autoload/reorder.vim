@@ -8,7 +8,7 @@ import {
     Opfunc,
 } from 'lg.vim'
 
-const SID: string = execute('fu Opfunc')->matchstr('\C\<def\s\+\zs<SNR>\d\+_')
+const SID: string = execute('function Opfunc')->matchstr('\C\<def\s\+\zs<SNR>\d\+_')
 
 var how: string
 var stype: string
@@ -48,7 +48,7 @@ def PasteNewText(contents: list<string>) #{{{2
         setreg('"', new)
         &clipboard = ''
         &selection = 'inclusive'
-        norm! gvp`[
+        normal! gvp`[
     catch
         Catch()
         return
@@ -66,7 +66,7 @@ def ReorderLines() #{{{2
     if how == 'sort'
         var lines: list<string> = getline(firstline, lastline)
         var flag: string = ContainsOnlyDigits(lines) ? ' n' : ''
-        exe range .. 'sort' .. flag
+        execute range .. 'sort' .. flag
 
     elseif how == 'reverse'
         var foldenable_save: bool = &l:foldenable
@@ -75,7 +75,8 @@ def ReorderLines() #{{{2
         [foldenable_save, winid, bufnr] = [&l:foldenable, win_getid(), bufnr('%')]
         try
             &l:foldenable = false
-            exe 'keepj keepp ' .. range .. 'g/^/m ' .. (firstline - 1)
+            execute 'keepjumps keeppatterns '
+                .. range .. 'global/^/move ' .. (firstline - 1)
         finally
             if winbufnr(winid) == bufnr
                 var tabnr: number
@@ -87,7 +88,7 @@ def ReorderLines() #{{{2
 
     elseif how == 'shuf'
         # Alternative:
-        #     exe 'sil keepj keepp ' .. range .. '!shuf'
+        #     execute 'silent keepjumps keeppatterns ' .. range .. '!shuf'
         var randomized: list<string> = getline(firstline, lastline)->Randomize()
         setline(firstline, randomized)
     endif
@@ -186,7 +187,7 @@ enddef
 
 def Randomize(list: list<string>): list<string> #{{{2
     # Alternative:
-    #     sil return systemlist('shuf', list)
+    #     silent return systemlist('shuf', list)
     return len(list)
         ->range()
         ->mapnew((_, _) => list->remove(srand()->rand() % len(list)))
