@@ -1,8 +1,5 @@
 vim9script noclear
 
-if exists('loaded') | finish | endif
-var loaded = true
-
 import {
     Catch,
     Opfunc,
@@ -131,7 +128,7 @@ def ReorderNonLinewiseText(): list<string> #{{{2
         texts_to_reorder = text_inside
             ->split(sep_split)
             # remove surrounding whitespace
-            ->map((_, v: string): string => trim(v))
+            ->map((_, v: string) => trim(v))
 
         # `join()` doesn't interpret its 2nd argument the same way `split()` does:{{{
         #
@@ -177,9 +174,9 @@ def ContainsOnlyDigits(to_reorder: list<string>): bool #{{{2
 
     var texts: list<string> = to_reorder
         # Vim passes a variable  to a function by reference not  by copy, and we
-        # don't want `map()` nor `filter()` to alter the text; hence `mapnew()`,
-        # and not `map()`.
-        ->mapnew((_, v: string): string => v->matchstr('\D'))
+        # don't want `map()` nor `filter()` to alter the text; hence `copy()`
+        ->copy()
+        ->map((_, v: string) => v->matchstr('\D'))
         ->filter((_, v: string): bool => v != '')
 
     return empty(texts)
